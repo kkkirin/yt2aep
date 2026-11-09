@@ -1,0 +1,17 @@
+BRIEF.md
+.venv/
+.verification/
+.runtime/
+__pycache__/
+*.py[cod]
+*.log
+*.done
+*.env
+.env
+.DS_Store
+cache/
+output/
+projects/
+assets/
+e3d_looks/
+of_research/
