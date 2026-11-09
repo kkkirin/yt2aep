@@ -1,6 +1,7 @@
 ﻿// build_glitch.jsx — 標準エフェクトで作るグリッチテキスト（チュートリアル07）
 // 出力先: --env out=<フォルダ>。既定は道具フォルダ内の output/glitch/。
 // simple=0 で詳細版。既定は3本のスライダーで操作する簡易版。
+// wide=0 で文字とノイズのコンポを1920幅に戻す。既定は3840幅（グリッチを強くしても、ずれた文字が端で切れない）。
 // コロラマの出力サイクルはグレースケールランプ＋レベルで代用。
 // 文字サイズ・黒の点の角度は映像からの推定値。
 var __MAIN = File($.fileName);
@@ -87,7 +88,9 @@ function build() {
     var PREV_DIR = OUT_DIR + "/preview/pass" + PASS; new Folder(PREV_DIR).create();
 
     // ============ text comp ============
-    var cText = Y.comp("text", 1920, 1080, DURF, FPS);
+    // 文字とノイズのコンポは横に広げる。1920幅だと、グリッチの強さ100で、ずれた文字がコンポの端で切れる
+    var TW = env.wide == "0" ? 1920 : 3840;
+    var cText = Y.comp("text", TW, 1080, DURF, FPS);
     var tl = cText.layers.addText(TEXT);
     var tp = tl.property("ADBE Text Properties").property("ADBE Text Document");
     var got = "";
@@ -104,12 +107,13 @@ function build() {
     Y.log("font: " + got);
     var r = tl.sourceRectAtTime(0, false);
     tl.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([r.left + r.width / 2, r.top + r.height / 2]);
-    tl.property("ADBE Transform Group").property("ADBE Position").setValue([960, 540]);
+    tl.property("ADBE Transform Group").property("ADBE Position").setValue([TW / 2, 540]);
     Y.log("text rect w=" + r.width.toFixed(1) + " h=" + r.height.toFixed(1));
     stamp("text comp");
 
     // ============ noise comp ============
-    var cNoise = Y.comp("noise", 1920, 1080, DURF, FPS);
+    // ノイズも同じ幅にする。ノイズの範囲の外にずれた文字は描かれない
+    var cNoise = Y.comp("noise", TW, 1080, DURF, FPS);
     var n1 = Y.solid(cNoise, "noise", [0, 0, 0]);
     var i = addFx(n1, "ADBE Fractal Noise");
     S(n1, i, "ADBE Fractal Noise-0001", 1);        // 基本
@@ -198,6 +202,7 @@ function build() {
     i = addFx(lText, "ADBE Set Matte3");
     S(lText, i, "ADBE Set Matte3-0001", NI);
     S(lText, i, "ADBE Set Matte3-0002", 7);                                 // 明度
+    if (TW != 1920) S(lText, i, "ADBE Set Matte3-0004", 0);                 // マットを伸縮してフィット off
     var iM = addFx(lText, "ADBE Displacement Map", "master");
     S(lText, iM, "ADBE Displacement Map-0001", NI);
     S(lText, iM, "ADBE Displacement Map-0002", 7);                          // 水平: 明度
